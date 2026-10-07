@@ -15,9 +15,12 @@ export default class AppPickerSorterPrefs extends ExtensionPreferences {
     });
 
     const modes = ['manual', 'alphabetical', 'usage', 'date-added'];
-    row.selected = modes.indexOf(settings.get_string('sort-mode'));
+    const selected = modes.indexOf(settings.get_string('sort-mode'));
+    row.selected = selected >= 0 ? selected : 0;
     row.connect('notify::selected', () => {
-      settings.set_string('sort-mode', modes[row.selected]);
+      const mode = modes[row.selected];
+      if (mode)
+        settings.set_string('sort-mode', mode);
     });
 
     group.add(row);
