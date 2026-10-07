@@ -6,16 +6,17 @@ This is the **utilcom** fork of App Grid Sorter — a small GJS GNOME Shell exte
 
 1. Read [AGENTS.md](AGENTS.md) (same guidance for humans and agents).
 2. Keep `LICENSE` as GPL-2.0.
-3. Push only to `utilcom/gnome-app-grid-sorter`. Do not push to `panta82/gnome-app-grid-sorter`.
+3. Push only to `utilcom/gnome-app-grid-sorter`. Do not push to the original upstream remote.
 
 ## Workflow
 
 ```bash
 git checkout -b vibe/your-topic
-# edit under app-grid-sorter@pantas.net/
+# edit under app-grid-sorter@utilcom/
 ./build.sh && ./install.sh
 # enable in Extension Manager, log out/in, verify sort modes + QS on/off
 git commit
+# ask before every push
 git push -u origin vibe/your-topic
 ```
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-EXTENSION_UUID="app-grid-sorter@pantas.net"
+EXTENSION_UUID="app-grid-sorter@utilcom"
 INSTALL_DIR="$HOME/.local/share/gnome-shell/extensions/$EXTENSION_UUID"
 RESTART_SHELL="${1:-}"
 

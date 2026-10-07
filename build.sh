@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-EXTENSION_UUID="app-grid-sorter@pantas.net"
+EXTENSION_UUID="app-grid-sorter@utilcom"
 SOURCE_DIR="${EXTENSION_UUID}"
 BUILD_DIR="dist"
 

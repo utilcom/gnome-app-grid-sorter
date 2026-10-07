@@ -1,26 +1,26 @@
 # AGENTS.md — coding-agent guide for App Grid Sorter
 
-This is a **vibe coded** GNOME Shell extension fork (`utilcom/gnome-app-grid-sorter`). Prefer small, reviewable commits. Push only to `origin` (utilcom). Never push to `upstream` (panta82).
+This is a **vibe coded** GNOME Shell extension fork (`utilcom/gnome-app-grid-sorter`). Prefer small, reviewable commits. Push only to `origin` (utilcom). Never push to `upstream` (fetch-only original project).
 
 ## Repo layout
 
 | Path | Role |
 |------|------|
-| `app-grid-sorter@pantas.net/extension.js` | Runtime: sort engine + optional Quick Settings UI |
-| `app-grid-sorter@pantas.net/prefs.js` | Adw preferences window |
-| `app-grid-sorter@pantas.net/metadata.json` | UUID, shell-version, url |
-| `app-grid-sorter@pantas.net/schemas/*.gschema.xml` | GSettings keys |
+| `app-grid-sorter@utilcom/extension.js` | Runtime: sort engine + optional Quick Settings UI |
+| `app-grid-sorter@utilcom/prefs.js` | Adw preferences window |
+| `app-grid-sorter@utilcom/metadata.json` | UUID, shell-version, url |
+| `app-grid-sorter@utilcom/schemas/*.gschema.xml` | GSettings keys |
 | `build.sh` / `install.sh` / `uninstall.sh` | Pack, install to `~/.local/share/gnome-shell/extensions/`, remove |
 | `LICENSE` | **GPL-2.0 — do not rewrite** |
 
-UUID stays `app-grid-sorter@pantas.net` (matches installed path and schema id).
+UUID is `app-grid-sorter@utilcom` (matches installed path). GSettings schema id remains `org.gnome.shell.extensions.app-grid-sorter`.
 
 ## Git remotes
 
 - `origin` → `https://github.com/utilcom/gnome-app-grid-sorter.git` (fetch + push)
-- `upstream` → `https://github.com/panta82/gnome-app-grid-sorter.git` (fetch only; push disabled)
+- `upstream` → original project (fetch only; push disabled) — see README Credits
 
-Work on a feature branch (e.g. `vibe/fixes`), then merge/push to utilcom. No force-push to shared branches unless the human asks.
+Work on a feature branch (e.g. `vibe/fixes`), then merge/push to utilcom. No force-push to shared branches unless the human asks. Ask before every push.
 
 ## Design rules (do not regress)
 
@@ -42,7 +42,7 @@ gsettings get org.gnome.shell.extensions.app-grid-sorter sort-mode
 
 Installed path:
 
-`~/.local/share/gnome-shell/extensions/app-grid-sorter@pantas.net/`
+`~/.local/share/gnome-shell/extensions/app-grid-sorter@utilcom/`
 
 After schema edits, `install.sh` runs `glib-compile-schemas` on that path.
 
@@ -59,7 +59,8 @@ After schema edits, `install.sh` runs `glib-compile-schemas` on that path.
 - Ignoring `originalMethod` in overrides → Manual mode breaks (order won't stick)
 - Claiming shell versions in `metadata.json` without a smoke test on that Shell
 - Changing LICENSE to GPL-3 to "match" an old README typo
-- Pushing to panta82 / opening PRs against upstream unless the human explicitly asks
+- Pushing to upstream / opening PRs against the original project unless the human explicitly asks
+- Changing UUID without uninstalling the old install path and a logout/in
 
 ## When unsure
 

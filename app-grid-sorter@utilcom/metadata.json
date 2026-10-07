@@ -1,5 +1,5 @@
 {
-  "uuid": "app-grid-sorter@pantas.net",
+  "uuid": "app-grid-sorter@utilcom",
   "name": "App Grid Sorter",
   "description": "Sort app grid alphabetically, by usage frequency, or by the app's last update date.",
   "shell-version": ["45", "46", "47", "48", "49", "50"],
