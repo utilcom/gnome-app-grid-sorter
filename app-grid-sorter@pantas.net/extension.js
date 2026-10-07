@@ -11,21 +11,31 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 /**
  * Sort engine: owns InjectionManager patches and sort-mode listeners.
  * Lives on the Extension so sorting works even when Quick Settings UI is hidden.
+ *
+ * Manual mode delegates to Shell's original _compareItems / _redisplay so
+ * app-picker-layout (page manager) is preserved. Sorted modes replace both.
  */
 class AppGridSortEngine {
   constructor(extension) {
     this._settings = extension.getSettings();
     this._injectionManager = new InjectionManager();
     this._appUsage = Shell.AppUsage.get_default();
+    this._mtimeCache = new Map();
+    this._desktopDirs = this._buildDesktopDirs();
 
-    const Controls = Main.overview._overview._controls;
-    this._appDisplay = Controls._appDisplay;
+    this._appDisplay = null;
+    try {
+      const controls = Main.overview?._overview?._controls;
+      this._appDisplay = controls?._appDisplay ?? null;
+    } catch (e) {
+      console.error(`[AppGridSorter] Could not resolve AppDisplay: ${e}`);
+    }
 
-    this._patchCompareItems();
+    this._patchMethods();
     this._connectListeners();
   }
 
-  _getDesktopDirs() {
+  _buildDesktopDirs() {
     const dirs = [];
     const seen = new Set();
     const add = (dir) => {
@@ -54,8 +64,26 @@ class AppGridSortEngine {
     return dirs;
   }
 
+  /** Reject path separators / traversal so appId cannot escape applications dirs. */
+  _isSafeAppId(appId) {
+    if (!appId || typeof appId !== 'string')
+      return false;
+    if (appId.includes('/') || appId.includes('\\') || appId.includes('\0'))
+      return false;
+    if (appId === '.' || appId === '..')
+      return false;
+    return true;
+  }
+
   _getDesktopFileMtime(appId) {
-    for (const dir of this._getDesktopDirs()) {
+    if (!this._isSafeAppId(appId))
+      return 0;
+
+    if (this._mtimeCache.has(appId))
+      return this._mtimeCache.get(appId);
+
+    let mtime = 0;
+    for (const dir of this._desktopDirs) {
       const path = GLib.build_filenamev([dir, appId]);
       if (!GLib.file_test(path, GLib.FileTest.EXISTS))
         continue;
@@ -64,51 +92,63 @@ class AppGridSortEngine {
         const file = Gio.File.new_for_path(path);
         const info = file.query_info('time::modified', Gio.FileQueryInfoFlags.NONE, null);
         const dt = info.get_modification_date_time();
-        if (dt)
-          return dt.to_unix();
+        if (dt) {
+          mtime = dt.to_unix();
+          break;
+        }
       } catch (e) {
         console.error(`[AppGridSorter] Error reading ${path}: ${e.message}`);
       }
     }
 
-    return 0;
+    this._mtimeCache.set(appId, mtime);
+    return mtime;
   }
 
-  _patchCompareItems() {
+  _clearMtimeCache() {
+    this._mtimeCache.clear();
+  }
+
+  _patchMethods() {
     const settings = this._settings;
     const appUsage = this._appUsage;
     const getDesktopFileMtime = this._getDesktopFileMtime.bind(this);
+    const clearMtimeCache = this._clearMtimeCache.bind(this);
 
     this._injectionManager.overrideMethod(
       AppDisplay.AppDisplay.prototype,
       '_compareItems',
-      () => {
+      originalMethod => {
         return function(a, b) {
           const mode = settings.get_string('sort-mode');
 
+          if (mode === 'manual')
+            return originalMethod.call(this, a, b);
+
           try {
             if (mode === 'alphabetical') {
-              if (!a.name || !b.name) return 0;
+              if (!a.name || !b.name)
+                return 0;
               return a.name.localeCompare(b.name);
             }
 
             if (mode === 'usage') {
-              if (!a.id || !b.id) return 0;
+              if (!a.id || !b.id)
+                return 0;
               return appUsage.compare(a.id, b.id);
             }
 
             if (mode === 'date-added') {
               if (!a.id || !b.id)
                 return 0;
-              const aTime = getDesktopFileMtime(a.id);
-              const bTime = getDesktopFileMtime(b.id);
-              return bTime - aTime;
+              return getDesktopFileMtime(b.id) - getDesktopFileMtime(a.id);
             }
           } catch (e) {
             console.error(`[AppGridSorter] Error in comparison: ${e}`);
           }
 
-          return 0;
+          // Unknown mode: fall back to Shell layout order
+          return originalMethod.call(this, a, b);
         };
       }
     );
@@ -116,28 +156,47 @@ class AppGridSortEngine {
     this._injectionManager.overrideMethod(
       AppDisplay.AppDisplay.prototype,
       '_redisplay',
-      () => {
+      originalMethod => {
         return function() {
           const mode = settings.get_string('sort-mode');
-          const shouldSort = mode !== 'manual';
 
-          let currentApps = this._orderedItems.slice();
-          let currentAppIds = currentApps.map(icon => icon.id);
+          // Manual (and unknown): use Shell's page-manager layout so order
+          // persists across redisplay / reboot (app-picker-layout).
+          if (mode === 'manual') {
+            originalMethod.call(this);
+            return;
+          }
+
+          // Keep folder contents in sync (AppDisplay._redisplay does this)
+          if (this._folderIcons) {
+            this._folderIcons.forEach(icon => {
+              try {
+                icon.view._redisplay();
+              } catch (e) {
+                console.error(`[AppGridSorter] Folder redisplay failed: ${e}`);
+              }
+            });
+          }
+
+          if (mode === 'date-added')
+            clearMtimeCache();
+
+          const currentApps = this._orderedItems.slice();
+          const currentAppIds = currentApps.map(icon => icon.id);
 
           let newApps = this._loadApps();
-          if (shouldSort)
-            newApps = newApps.sort(this._compareItems.bind(this));
-          let newAppIds = newApps.map(icon => icon.id);
+          newApps = newApps.sort(this._compareItems.bind(this));
+          const newAppIds = newApps.map(icon => icon.id);
 
-          let addedApps = newApps.filter(icon => !currentAppIds.includes(icon.id));
-          let removedApps = currentApps.filter(icon => !newAppIds.includes(icon.id));
+          const addedApps = newApps.filter(icon => !currentAppIds.includes(icon.id));
+          const removedApps = currentApps.filter(icon => !newAppIds.includes(icon.id));
 
-          removedApps.forEach((icon) => {
+          removedApps.forEach(icon => {
             this._removeItem(icon);
             icon.destroy();
           });
 
-          const {itemsPerPage} = this._grid;
+          const itemsPerPage = this._grid?.itemsPerPage || 1;
           newApps.forEach((icon, i) => {
             const page = Math.floor(i / itemsPerPage);
             const position = i % itemsPerPage;
@@ -165,6 +224,7 @@ class AppGridSortEngine {
 
   _connectListeners() {
     this._settingsHandler = this._settings.connect('changed::sort-mode', () => {
+      this._clearMtimeCache();
       this.resort();
     });
   }
@@ -175,6 +235,7 @@ class AppGridSortEngine {
       this._settingsHandler = null;
     }
     this._injectionManager.clear();
+    this._mtimeCache.clear();
     this._appDisplay = null;
     this._settings = null;
   }

@@ -25,8 +25,8 @@ Work on a feature branch (e.g. `vibe/fixes`), then merge/push to utilcom. No for
 ## Design rules (do not regress)
 
 1. **Sort engine ≠ Quick Settings.** `AppGridSortEngine` must start in `Extension.enable()` and stop in `disable()`. QS toggle is optional chrome only.
-2. **Manual mode** leaves `_redisplay` unsorted (`shouldSort = mode !== 'manual'`). Manual order persistence across reboot is a known open issue — fix separately if asked.
-3. **Last Update** resolves `.desktop` mtimes via Flatpak exports + XDG user/system data dirs. Prefer `GLib.get_user_data_dir()` / `GLib.get_system_data_dirs()` over hardcoding only `/usr/share/applications`.
+2. **Manual mode must call `originalMethod`.** `InjectionManager.overrideMethod` passes the saved Shell method — use it for `_compareItems` and `_redisplay` when `sort-mode === 'manual'` so `app-picker-layout` / page manager order survives redisplay and reboot. Sorted modes keep the custom index-based `_redisplay`.
+3. **Last Update** resolves `.desktop` mtimes via Flatpak exports + XDG user/system data dirs. Cache mtimes per redisplay; reject `appId` values that contain `/`, `\\`, or NUL (no path escape). Prefer `GLib.get_user_data_dir()` / `GLib.get_system_data_dirs()` over hardcoding only `/usr/share/applications`.
 4. Match existing GJS style: ESM imports, `InjectionManager.overrideMethod`, Adw prefs, `console.error` with `[AppGridSorter]` prefix.
 
 ## Build / install / debug
@@ -56,6 +56,7 @@ After schema edits, `install.sh` runs `glib-compile-schemas` on that path.
 ## Common pitfalls
 
 - Putting `InjectionManager` on the QS toggle → sorting dies when QS is hidden
+- Ignoring `originalMethod` in overrides → Manual mode breaks (order won't stick)
 - Claiming shell versions in `metadata.json` without a smoke test on that Shell
 - Changing LICENSE to GPL-3 to "match" an old README typo
 - Pushing to panta82 / opening PRs against upstream unless the human explicitly asks
