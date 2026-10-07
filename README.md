@@ -4,7 +4,7 @@ A minimal GNOME Shell extension to sort the app grid.
 
 > **Note:** This repository (`utilcom/gnome-app-grid-sorter`) is a **vibe coded** fork.
 > Expect agent-assisted edits, small iterative commits, and docs aimed at coding agents.
-> Upstream: [panta82/gnome-app-grid-sorter](https://github.com/panta82/gnome-app-grid-sorter).
+> Credit to panta82: [panta82/gnome-app-grid-sorter](https://github.com/panta82/gnome-app-grid-sorter).
 
 ![screenshot1.png](misc/screenshot1.png)
 
@@ -28,14 +28,14 @@ A minimal GNOME Shell extension to sort the app grid.
 4. Click "Settings…" to open preferences
 
 **Via Settings:**
-1. Open Extensions / Extension Manager
+1. Open Extensions / [Extension Manager](https://github.com/mjakeman/extension-manager)
 2. Find "App Grid Sorter"
 3. Click the gear icon
 4. Choose sort mode and toggle Quick Settings visibility
 
 ## Requirements
 
-- GNOME Shell 46, 47, 48, 49, or 50 (Ubuntu LTS 24.04+ / current-minus-one LTS; 26.04 included when it ships)
+- GNOME Shell 46, 47, 48, 49, or 50 (Targeting Ubuntu LTS 24.04 and 26.04, plus latest Gnome Shell).
 
 Extension UUID: `app-grid-sorter@utilcom` (installs under `~/.local/share/gnome-shell/extensions/app-grid-sorter@utilcom/`).
 
@@ -50,7 +50,7 @@ Build and install:
 
 Then log out and back in (Wayland) or press Alt+F2 → `r` (X11).
 
-On Bazzite / immutable desktops, use Extension Manager to enable the extension, then log out and back in.
+You can also use [Extension Manager](https://github.com/mjakeman/extension-manager) to manage the extension.
 
 Uninstall with:
 
