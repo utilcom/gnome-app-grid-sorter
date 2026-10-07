@@ -46,6 +46,10 @@ Installed path:
 
 After schema edits, `install.sh` runs `glib-compile-schemas` on that path.
 
+## Supported Shell versions
+
+Target Ubuntu LTS **current minus one** through current: GNOME Shell **46+** (24.04 = 46; drop 45). Claim `shell-version` entries only for 46–50 in `metadata.json`. Prefer smoke tests on those versions before releasing.
+
 ## Shell APIs used
 
 - Override `AppDisplay.AppDisplay.prototype._compareItems` and `_redisplay`

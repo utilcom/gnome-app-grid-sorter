@@ -35,7 +35,7 @@ A minimal GNOME Shell extension to sort the app grid.
 
 ## Requirements
 
-- GNOME Shell 45, 46, 47, 48, 49, or 50
+- GNOME Shell 46, 47, 48, 49, or 50 (Ubuntu LTS 24.04+ / current-minus-one LTS; 26.04 included when it ships)
 
 Extension UUID: `app-grid-sorter@utilcom` (installs under `~/.local/share/gnome-shell/extensions/app-grid-sorter@utilcom/`).
 
