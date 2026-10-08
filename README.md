@@ -92,4 +92,4 @@ Inspired by:
 
 ## License
 
-GPL-2.0 (see [LICENSE](LICENSE)). Do not change the LICENSE file to GPL-3 without a clear legal reason and relicensing from all copyright holders.
+GPL-2.0 (see [LICENSE](LICENSE)).
